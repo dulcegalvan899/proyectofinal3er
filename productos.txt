@@ -1,0 +1,10 @@
+2|pantalon|320|ropa elegante
+3|blusa|320|dama
+5|tenis|2800|calzado
+4|vestidos|560|dama
+1|bolsa|3000|bolsa de dama
+2|pantalones|550|alegante para dama
+3|tops|350|dama
+3|bolsas|3000|marca elegante
+5|tenis|2800|dama
+6|vestidos|600|dama
