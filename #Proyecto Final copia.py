@@ -1,0 +1,270 @@
+#Proyecto Final copia
+#Submodulo
+#Autores: Galavan Dulce Guevara Kelly
+
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
+from PIL import Image, ImageTk  
+import os
+from datetime import datetime
+
+# -------------------------
+# PANTALLA: REGISTRO DE PRODUCTOS
+# -------------------------
+def abrir_registro_productos():
+   reg = tk.Toplevel()
+   reg.title("Registro de Productos")
+   reg.geometry("400x400")
+   reg.resizable(False, False)
+
+   lbl_id = tk.Label(reg, text="ID del Producto:", font=("Arial", 12))
+   lbl_id.pack(pady=5)
+   txt_id = tk.Entry(reg, font=("Arial", 12))
+   txt_id.pack(pady=5)
+
+   lbl_desc = tk.Label(reg, text="Descripción:", font=("Arial", 12))
+   lbl_desc.pack(pady=5)
+   txt_desc = tk.Entry(reg, font=("Arial", 12))
+   txt_desc.pack(pady=5)
+
+   lbl_precio = tk.Label(reg, text="Precio:", font=("Arial", 12))
+   lbl_precio.pack(pady=5)
+   txt_precio = tk.Entry(reg, font=("Arial", 12))
+   txt_precio.pack(pady=5)
+
+   lbl_categoria = tk.Label(reg, text="Categoría:", font=("Arial", 12))
+   lbl_categoria.pack(pady=5)
+   txt_categoria = tk.Entry(reg, font=("Arial", 12))
+   txt_categoria.pack(pady=5)
+
+   def guardar_producto():
+      id_prod = txt_id.get().strip()
+      descripcion = txt_desc.get().strip()
+      precio = txt_precio.get().strip()
+      categoria = txt_categoria.get().strip()
+
+      if id_prod == "" or descripcion == "" or precio == "" or categoria == "":
+         messagebox.showwarning("Campos Vacíos", "Por favor complete todos los campos.")
+         return
+
+      try:
+         float(precio)
+      except:
+         messagebox.showerror("Error", "El precio debe ser un número.")
+         return
+
+      BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+      archivo = os.path.join(BASE_DIR, "productos.txt")
+
+      with open(archivo, "a", encoding="utf-8") as archivo:
+         archivo.write(f"{id_prod}|{descripcion}|{precio}|{categoria}\n")
+
+      messagebox.showinfo("Guardado", "Producto registrado correctamente.")
+
+      txt_id.delete(0, tk.END)
+      txt_desc.delete(0, tk.END)
+      txt_precio.delete(0, tk.END)
+      txt_categoria.delete(0, tk.END)
+
+   btn_guardar = ttk.Button(reg, text="Guardar Producto", command=guardar_producto)
+   btn_guardar.pack(pady=20)
+
+# -------------------------
+# VENTANA DE TICKET (AGREGADO: LOGO)
+# -------------------------
+def mostrar_ticket(producto, precio, cantidad, total):
+    ticket = tk.Toplevel()
+    ticket.title("Ticket de Venta")
+    ticket.geometry("300x420")
+    ticket.resizable(False, False)
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    ruta_logo = os.path.join(BASE_DIR, "ventas2025.png")
+
+    # Intentar cargar logo
+    try:
+        imagen = Image.open(ruta_logo)
+        imagen = imagen.resize((120,120))
+        logo_ticket = ImageTk.PhotoImage(imagen)
+
+        lbl_logo_ticket = tk.Label(ticket, image=logo_ticket)
+        lbl_logo_ticket.image = logo_ticket  # evitar garbage collector
+        lbl_logo_ticket.pack(pady=5)
+    except:
+        tk.Label(ticket, text="(Sin Logo)", font=("Arial", 10)).pack(pady=5)
+
+    fecha_hora = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+
+    texto = (
+        "--------------------------------------\n"
+        "           *** PUNTO DE VENTA ***\n"
+        f"Fecha: {fecha_hora}\n"
+        "--------------------------------------\n"
+        f"Producto: {producto}\n"
+        f"Precio: ${precio}\n"
+        f"Cantidad: {cantidad}\n"
+        "--------------------------------------\n"
+        f"TOTAL: ${total}\n"
+        "--------------------------------------\n"
+        "      ¡GRACIAS POR SU COMPRA!\n"
+    )
+
+    lbl_ticket = tk.Label(ticket, text=texto, justify="left", font=("Consolas", 10))
+    lbl_ticket.pack(pady=10)
+
+    btn_cerrar = ttk.Button(ticket, text="Cerrar", command=ticket.destroy)
+    btn_cerrar.pack(pady=10)
+
+
+# -------------------------
+# REGISTRO DE VENTAS
+# -------------------------
+def abrir_registro_ventas():
+   ven = tk.Toplevel()
+   ven.title("Registro de Ventas")
+   ven.geometry("420x430")
+   ven.resizable(False, False)
+
+   productos = {}
+   try:
+      BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+      archivof = os.path.join(BASE_DIR,"productos.txt")
+      with open(archivof, "r", encoding="utf-8") as archivo:
+         for linea in archivo:
+            partes = linea.strip().split("|")
+            if len(partes) == 4:
+               idp, desc, precio, cat = partes
+               productos[desc] = float(precio)
+   except FileNotFoundError:
+      messagebox.showerror("Error", "No se encontró el archivo productos.txt")
+      ven.destroy()
+      return
+
+   lista_productos = list(productos.keys())
+
+   lbl_prod = tk.Label(ven, text="Producto:", font=("Arial", 12))
+   lbl_prod.pack(pady=5)
+   cb_producto = ttk.Combobox(ven, values=lista_productos, font=("Arial", 12), state="readonly")
+   cb_producto.pack(pady=5)
+
+   lbl_precio = tk.Label(ven, text="Precio:", font=("Arial", 12))
+   lbl_precio.pack(pady=5)
+   txt_precio = tk.Entry(ven, font=("Arial", 12), state="readonly")
+   txt_precio.pack(pady=5)
+
+   lbl_cantidad = tk.Label(ven, text="Cantidad:", font=("Arial", 12))
+   lbl_cantidad.pack(pady=5)
+   cantidad_var = tk.StringVar(ven)
+   ven.cantidad_var = cantidad_var
+   txt_cantidad = tk.Entry(ven, font=("Arial", 12), textvariable=cantidad_var)
+   txt_cantidad.pack(pady=5)
+
+   cantidad_var.trace_add("write", lambda *args: calcular_total())
+
+   lbl_total = tk.Label(ven, text="Total:", font=("Arial", 12))
+   lbl_total.pack(pady=5)
+   txt_total = tk.Entry(ven, font=("Arial", 12), state="readonly")
+   txt_total.pack(pady=5)
+
+   def actualizar_precio(event):
+      prod = cb_producto.get()
+      if prod in productos:
+         txt_precio.config(state="normal")
+         txt_precio.delete(0, tk.END)
+         txt_precio.insert(0, productos[prod])
+         txt_precio.config(state="readonly")
+         calcular_total()
+
+   def calcular_total(*args):
+      try:
+         cant = int(txt_cantidad.get())
+         precio = float(txt_precio.get())
+         total = cant * precio
+         txt_total.config(state="normal")
+         txt_total.delete(0, tk.END)
+         txt_total.insert(0, total)
+         txt_total.config(state="readonly")
+      except:
+         txt_total.config(state="normal")
+         txt_total.delete(0, tk.END)
+         txt_total.config(state="readonly")
+
+   def registrar_venta():
+      prod = cb_producto.get()
+      precio = txt_precio.get()
+      cant = txt_cantidad.get()
+      total = txt_total.get()
+
+      if prod == "" or precio == "" or cant == "" or total == "":
+         messagebox.showwarning("Campos Vacíos", "Todos los campos deben estar completos.")
+         return
+
+      BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+      archivov = os.path.join(BASE_DIR, "ventas.txt")
+
+      with open(archivov, "a", encoding="utf-8") as archivo:
+         archivo.write(f"{prod}|{precio}|{cant}|{total}\n")
+
+      mostrar_ticket(prod, precio, cant, total)
+
+      cb_producto.set("")
+      txt_precio.config(state="normal"); txt_precio.delete(0, tk.END); txt_precio.config(state="readonly")
+      txt_cantidad.delete(0, tk.END)
+      txt_total.config(state="normal"); txt_total.delete(0, tk.END); txt_total.config(state="readonly")
+
+   cb_producto.bind("<<ComboboxSelected>>", actualizar_precio)
+
+   btn_guardar = ttk.Button(ven, text="Registrar Venta", command=registrar_venta)
+   btn_guardar.pack(pady=25)
+
+
+# -------------------------
+# OTROS MENÚS
+# -------------------------
+def abrir_reportes():
+    messagebox.showinfo("Reportes", "Aquí irá el módulo de reportes.")
+
+def abrir_acerca_de():
+    messagebox.showinfo("Acerca de", "Punto de Venta de Ropa\nProyecto Escolar\nVersión 1.0")
+
+
+# -------------------------
+# VENTANA PRINCIPAL
+# -------------------------
+ventana = tk.Tk()
+ventana.title("Fashion D&K&L 1.0")
+ventana.geometry("500x600")
+ventana.resizable(False, False)
+ventana.configure(bg="#ddcbd7")
+
+# LOGO PRINCIPAL
+try:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    imagen = Image.open(os.path.join(BASE_DIR,"ventas2025.png"))
+    imagen = imagen.resize((250, 250))
+    img_logo = ImageTk.PhotoImage(imagen)
+
+    lbl_logo = tk.Label(ventana, image=img_logo)
+    lbl_logo.pack(pady=20)
+except:
+    tk.Label(ventana, text="(Aquí va el logo del sistema)", font=("Arial", 14)).pack(pady=40)
+
+
+# -------------------------
+# BOTONES
+# -------------------------
+estilo = ttk.Style()
+estilo.configure("TButton",
+                 font=("Arial", 12),
+                 padding=10,
+                 background="#f79df7",
+                 foreground="black",
+                 relief="flat")
+
+ttk.Button(ventana, text="Registro de Productos", command=abrir_registro_productos).pack(pady=10)
+ttk.Button(ventana, text="Registro de Ventas", command=abrir_registro_ventas).pack(pady=10)
+ttk.Button(ventana, text="Reportes", command=abrir_reportes).pack(pady=10)
+ttk.Button(ventana, text="Acerca de", command=abrir_acerca_de).pack(pady=10)
+
+ventana.mainloop()
