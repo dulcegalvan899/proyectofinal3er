@@ -65,7 +65,59 @@ def abrir_registro_productos():
          txt_categoria.delete(0, tk.END)
    # --- Botón Guardar ---
    btn_guardar = ttk.Button(reg, text="Guardar Producto", command=guardar_producto)
-   btn_guardar.pack(pady=20) 
+   btn_guardar.pack(pady=20)
+
+#Aqui se coloca el codigo del Ticket
+from datetime import datetime
+
+def mostrar_ticket(producto, precio, cantidad, total):
+
+    ticket = tk.Toplevel()
+    ticket.title("Ticket de Venta")
+    ticket.geometry("300x420")
+    ticket.resizable(False, False)
+
+    # ======== CARGAR LOGO ========
+    try:
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        ruta_logo = os.path.join(BASE_DIR, "ventas2025.png")
+
+        imagen = Image.open(ruta_logo)
+        imagen = imagen.resize((120, 120))  # Tamaño del logo
+
+        logo = ImageTk.PhotoImage(imagen)
+
+        lbl_logo = tk.Label(ticket, image=logo)
+        lbl_logo.image = logo  # Necesario para evitar que la imagen se elimine
+        lbl_logo.pack(pady=5)
+
+    except Exception as e:
+        print("Error cargando logo:", e)
+
+    # Fecha y hora
+    fecha_hora = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+
+    # Texto del ticket
+    texto = (
+        "--------------------------------------\n"
+        "         *** PUNTO DE VENTA ***\n"
+        f"Fecha: {fecha_hora}\n"
+        "--------------------------------------\n"
+        f"Producto: {producto}\n"
+        f"Precio: ${precio}\n"
+        f"Cantidad: {cantidad}\n"
+        "--------------------------------------\n"
+        f"TOTAL: ${total}\n"
+        "--------------------------------------\n"
+        "   ¡GRACIAS POR SU COMPRA!\n"
+    )
+
+    lbl_ticket = tk.Label(ticket, text=texto, justify="left", font=("Consolas", 11))
+    lbl_ticket.pack(pady=10)
+
+    btn_cerrar = ttk.Button(ticket, text="Cerrar", command=ticket.destroy)
+    btn_cerrar.pack(pady=10)
+
 
 def abrir_registro_ventas():
    ven = tk.Toplevel()
@@ -152,7 +204,7 @@ def abrir_registro_ventas():
       archivov = os.path.join(BASE_DIR,"ventas.txt")
       with open(archivov, "a", encoding="utf-8") as archivo:
          archivo.write(f"{prod}|{precio}|{cant}|{total}\n")
-         messagebox.showinfo("Venta Registrada", "La venta se registró correctamente.")
+         mostrar_ticket(prod, precio, cant, total)
       # Limpiar campos
       cb_producto.set("")
       txt_precio.config(state="normal"); txt_precio.delete(0, tk.END); txt_precio.config(state="readonly")
@@ -166,10 +218,92 @@ def abrir_registro_ventas():
    btn_guardar.pack(pady=25) 
 
 def abrir_reportes():
-    messagebox.showinfo("Reportes", "Aquí irá el módulo de reportes.")
+    ventana = tk.Toplevel()
+    ventana.title("Reporte de Ventas")
+    ventana.geometry("700x450")
+    ventana.configure(bg="#f2f2f2")
+
+    titulo = tk.Label(
+        ventana,
+        text="Reporte de Ventas Realizadas",
+        font=("Arial", 16, "bold"),
+        bg="#f2f2f2"
+    )
+    titulo.pack(pady=10)
+
+    # Frame para tabla
+    frame_tabla = tk.Frame(ventana)
+    frame_tabla.pack(pady=10)
+
+    # Columnas
+    columnas = ("producto", "precio", "cantidad", "total")
+    tabla = ttk.Treeview(frame_tabla, columns=columnas, show="headings", height=15)
+
+    # Encabezados
+    tabla.heading("producto", text="Producto")
+    tabla.heading("precio", text="Precio")
+    tabla.heading("cantidad", text="Cantidad")
+    tabla.heading("total", text="Total")
+
+    # Tamaño de columnas
+    tabla.column("producto", width=250, anchor="center")
+    tabla.column("precio", width=100, anchor="center")
+    tabla.column("cantidad", width=100, anchor="center")
+    tabla.column("total", width=120, anchor="center")
+
+    tabla.pack()
+
+    total_general = 0  # Acumulador del total de ventas
+
+    # --- Leer archivo ventas.txt ---
+    try:
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        archivo_ruta = os.path.join(BASE_DIR, "ventas.txt")
+
+        with open(archivo_ruta, "r", encoding="utf-8") as archivo:
+            for linea in archivo:
+                if linea.strip():
+                    datos = linea.strip().split("|")
+                    if len(datos) == 4:
+                        tabla.insert("", tk.END, values=datos)
+
+                        # Sumar total de ventas
+                        try:
+                            total_general += float(datos[3])
+                        except ValueError:
+                            pass  # Evita errores si un dato no es numérico
+
+    except FileNotFoundError:
+        messagebox.showerror("Error", "El archivo ventas.txt no existe.")
+        ventana.destroy()
+        return
+
+    # Mostrar total general debajo de la tabla
+    lbl_total = tk.Label(
+        ventana,
+        text=f"TOTAL GENERAL DE VENTAS: ${total_general:,.2f}",
+        font=("Arial", 14, "bold"),
+        bg="#f2f2f2",
+        fg="green"
+    )
+    lbl_total.pack(pady=10)
+
 
 def abrir_acerca_de():
-    messagebox.showinfo("Acerca de", "Punto de Venta de Ropa\nProyecto Escolar\nVersión 1.0")
+ acerca = tk.Toplevel()
+ acerca.title("Acerca de")
+ acerca.geometry("250x200")
+ acerca.resizable(False, False)
+
+    # --- Etiquetas ---
+ lbl_id = tk.Label(acerca, text="Fashion Ventas 2025", font=("Arial", 14))
+ lbl_id.pack(pady=5)
+
+ lbl_creado = tk.Label(acerca, text="Creado por: Galvan Dulce, Guevara Kelly", font=("Arial", 12))
+ lbl_creado.pack(pady=5)
+
+ lbl_grupo = tk.Label(acerca, text="Grupo: 3A Prog Vesp", font=("Arial", 12))
+ lbl_grupo.pack(pady=5)
 
 # -------------------------
 # VENTANA PRINCIPAL
